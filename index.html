@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Горська Шаурма</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Roboto', system-ui, sans-serif;
+        }
+
+        :root {
+            --terracotta: #B3541C;
+            --mountain-stone: #F5F0E8;
+            --mountain-sky: #1A3B5D;
+            --mountain-grass: #2E7D32;
+            --mountain-rock: #2C3E50;
+            --peak-highlight: #E67E22;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--mountain-stone) 0%, #E8E0D5 100%);
+            min-height: 100vh;
+            padding: 16px;
+            position: relative;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" opacity="0.1"><polygon points="0,100 20,70 40,85 60,50 80,75 100,60 100,100" fill="%232C3E50"/><polygon points="0,100 15,80 35,95 55,70 75,90 100,75 100,100" fill="%231A3B5D"/></svg>');
+            background-repeat: repeat-x;
+            background-position: bottom;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .app {
+            position: relative;
+            z-index: 1;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--terracotta) 0%, #A04000 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 24px 24px 24px 24px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::after {
+            content: "⛰️";
+            position: absolute;
+            right: 20px;
+            bottom: 10px;
+            font-size: 60px;
+            opacity: 0.2;
+            transform: rotate(-5deg);
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 5px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        /* Cart Summary */
+        .cart-summary {
+            background: var(--mountain-sky);
+            color: white;
+            padding: 16px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 5px 15px rgba(26, 59, 93, 0.3);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .cart-summary:active {
+            transform: scale(0.98);
+        }
+
+        .cart-summary.empty {
+            background: #95A5A6;
+            opacity: 0.7;
+        }
+
+        .cart-total {
+            font-size: 20px;
+            font-weight: bold;
+            background: rgba(255,255,255,0.2);
+            padding: 8px 16px;
+            border-radius: 30px;
+        }
+
+        /* Categories */
+        .categories {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding: 10px 0 20px;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .categories::-webkit-scrollbar {
+            display: none;
+        }
+
+        .category-btn {
+            background: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 40px;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--mountain-rock);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .category-btn.active {
+            background: var(--terracotta);
+            color: white;
+            border-color: white;
+            box-shadow: 0 6px 15px rgba(179, 84, 28, 0.3);
+        }
+
+        /* Menu Grid */
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+
+        .menu-item {
+            background: white;
+            border-radius: 20px;
+            padding: 16px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .menu-item:active {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(179, 84, 28, 0.2);
+        }
+
+        .menu-item .emoji-bg {
+            font-size: 48px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .menu-item h3 {
+            font-size: 16px;
+            color: var(--mountain-rock);
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .menu-item .price {
+            color: var(--terracotta);
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        .menu-item .add-badge {
+            background: var(--mountain-grass);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+            margin-top: 10px;
+        }
+
+        /* Cart Modal */
+        .cart-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(5px);
+            display: none;
+            justify-content: center;
+            align-items: flex-end;
+            z-index: 1000;
+            padding: 16px;
+        }
+
+        .cart-modal.active {
+            display: flex;
+        }
+
+        .cart-content {
+            background: white;
+            border-radius: 30px 30px 0 0;
+            width: 100%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 24px;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        .cart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .cart-header h2 {
+            color: var(--mountain-sky);
+            font-size: 24px;
+        }
+
+        .close-cart {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: var(--mountain-rock);
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .cart-item-info h4 {
+            color: var(--mountain-rock);
+            margin-bottom: 5px;
+        }
+
+        .cart-item-info .item-price {
+            color: var(--terracotta);
+            font-weight: 600;
+        }
+
+        .cart-item-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .cart-item-actions button {
+            background: var(--mountain-stone);
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            color: var(--mountain-rock);
+            transition: all 0.2s;
+        }
+
+        .cart-item-actions button:active {
+            background: var(--terracotta);
+            color: white;
+        }
+
+        .cart-item-actions .qty {
+            font-size: 16px;
+            font-weight: 600;
+            min-width: 30px;
+            text-align: center;
+        }
+
+        .cart-total-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid var(--terracotta);
+        }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--mountain-sky);
+            margin-bottom: 20px;
+        }
+
+        .order-btn {
+            background: linear-gradient(135deg, var(--mountain-grass) 0%, #1B5E20 100%);
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 18px;
+            border-radius: 20px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s;
+            box-shadow: 0 5px 15px rgba(46, 125, 50, 0.3);
+        }
+
+        .order-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* Success Modal */
+        .success-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            padding: 16px;
+        }
+
+        .success-modal.active {
+            display: flex;
+        }
+
+        .success-content {
+            background: white;
+            border-radius: 40px;
+            padding: 40px 24px;
+            max-width: 400px;
+            text-align: center;
+            animation: popIn 0.4s ease;
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .success-emoji {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+
+        .success-content h2 {
+            color: var(--mountain-grass);
+            font-size: 28px;
+            margin-bottom: 15px;
+        }
+
+        .success-content p {
+            color: var(--mountain-rock);
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .phone-number {
+            background: var(--mountain-stone);
+            padding: 15px;
+            border-radius: 20px;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--terracotta);
+            margin: 20px 0;
+            letter-spacing: 1px;
+        }
+
+        .time-badge {
+            background: var(--mountain-sky);
+            color: white;
+            padding: 10px;
+            border-radius: 50px;
+            font-size: 18px;
+            font-weight: 600;
+            margin: 15px 0;
+        }
+
+        .close-success {
+            background: var(--terracotta);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <!-- Header -->
+        <div class="header">
+            <h1>⛰️ Горська Шаурма</h1>
+            <p>Смак гірських вершин у кожному шматочку</p>
+        </div>
+
+        <!-- Cart Summary -->
+        <div class="cart-summary empty" onclick="openCart()">
+            <span>🧺 Кошик</span>
+            <span class="cart-total">0 грн</span>
+        </div>
+
+        <!-- Categories -->
+        <div class="categories">
+            <button class="category-btn active" onclick="filterCategory('all')">Все</button>
+            <button class="category-btn" onclick="filterCategory('shawarma')">🌯 Шаурма</button>
+            <button class="category-btn" onclick="filterCategory('sauce')">🥫 Соуси</button>
+            <button class="category-btn" onclick="filterCategory('extra')">➕ Добавки</button>
+            <button class="category-btn" onclick="filterCategory('drink')">🥤 Напої</button>
+        </div>
+
+        <!-- Menu Grid -->
+        <div id="menuGrid" class="menu-grid"></div>
+    </div>
+
+    <!-- Cart Modal -->
+    <div id="cartModal" class="cart-modal">
+        <div class="cart-content">
+            <div class="cart-header">
+                <h2>🧺 Ваш кошик</h2>
+                <button class="close-cart" onclick="closeCart()">✕</button>
+            </div>
+            <div id="cartItems"></div>
+            <div class="cart-total-section">
+                <div class="total-row">
+                    <span>Всього:</span>
+                    <span id="cartTotal">0 грн</span>
+                </div>
+                <button class="order-btn" onclick="placeOrder()">✅ Замовити (самовивіз)</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="successModal" class="success-modal">
+        <div class="success-content">
+            <div class="success-emoji">🏔️✨</div>
+            <h2>Замовлення прийнято!</h2>
+            <p>Ваша шаурма скоро буде чекати на вас</p>
+            <div class="time-badge">⏱️ Заберіть протягом 10-15 хвилин</div>
+            <p>Якщо потрібно щось змінити:</p>
+            <div class="phone-number">📞 +380 99 123 45 67</div>
+            <p class="small">(Зателефонуйте нам для корекції замовлення)</p>
+            <button class="close-success" onclick="closeSuccessModal()">Дякую! 🌯</button>
+        </div>
+    </div>
+
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script>
+        // Инициализация Telegram Web App
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.ready();
+
+        // Меню
+        const menuItems = [
+            // Шаурма
+            { id: 1, category: 'shawarma', name: 'Класична (міні)', price: 120, emoji: '🌯' },
+            { id: 2, category: 'shawarma', name: 'Класична (стандарт)', price: 160, emoji: '🌯' },
+            { id: 3, category: 'shawarma', name: 'Класична (велика)', price: 210, emoji: '🌯' },
+            { id: 4, category: 'shawarma', name: 'Сирна', price: 180, emoji: '🧀' },
+            { id: 5, category: 'shawarma', name: 'Гостра', price: 175, emoji: '🌶️' },
+            // Соусы
+            { id: 6, category: 'sauce', name: 'Часниковий', price: 25, emoji: '🧄' },
+            { id: 7, category: 'sauce', name: 'Сирний', price: 25, emoji: '🧀' },
+            { id: 8, category: 'sauce', name: 'Барбекю', price: 25, emoji: '🔥' },
+            { id: 9, category: 'sauce', name: 'Гострий', price: 25, emoji: '🌶️' },
+            // Добавки
+            { id: 10, category: 'extra', name: 'Дод. сир', price: 20, emoji: '🧀' },
+            { id: 11, category: 'extra', name: 'Халапеньйо', price: 15, emoji: '🥒' },
+            { id: 12, category: 'extra', name: 'Бекон', price: 30, emoji: '🥓' },
+            { id: 13, category: 'extra', name: 'Гриби', price: 20, emoji: '🍄' },
+            // Напитки
+            { id: 14, category: 'drink', name: 'Coca-Cola 0.5', price: 35, emoji: '🥤' },
+            { id: 15, category: 'drink', name: 'Fanta 0.5', price: 35, emoji: '🥤' },
+            { id: 16, category: 'drink', name: 'Вода 0.5', price: 20, emoji: '💧' },
+        ];
+
+        // Корзина
+        let cart = [];
+        let currentCategory = 'all';
+
+        // Рендер меню
+        function renderMenu() {
+            const grid = document.getElementById('menuGrid');
+            const filtered = currentCategory === 'all' 
+                ? menuItems 
+                : menuItems.filter(item => item.category === currentCategory);
+            
+            grid.innerHTML = filtered.map(item => `
+                <div class="menu-item" onclick="addToCart(${item.id})">
+                    <div class="emoji-bg">${item.emoji}</div>
+                    <h3>${item.name}</h3>
+                    <div class="price">${item.price} грн</div>
+                    <div class="add-badge">+ Додати</div>
+                </div>
+            `).join('');
+        }
+
+        // Фильтр категорий
+        window.filterCategory = (category) => {
+            currentCategory = category;
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.textContent.includes(category === 'all' ? 'Все' : 
+                    category === 'shawarma' ? 'Шаурма' :
+                    category === 'sauce' ? 'Соуси' :
+                    category === 'extra' ? 'Добавки' : 'Напої'));
+            });
+            renderMenu();
+        };
+
+        // Добавление в корзину
+        window.addToCart = (itemId) => {
+            const item = menuItems.find(i => i.id === itemId);
+            const existing = cart.find(i => i.id === itemId);
+            
+            if (existing) {
+                existing.qty += 1;
+            } else {
+                cart.push({ ...item, qty: 1 });
+            }
+            
+            updateCartSummary();
+            
+            // Анимация добавления
+            tg.HapticFeedback.impactOccurred('light');
+        };
+
+        // Обновление сводки корзины
+        function updateCartSummary() {
+            const summary = document.querySelector('.cart-summary');
+            const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            
+            summary.querySelector('.cart-total').textContent = `${total} грн`;
+            
+            if (cart.length === 0) {
+                summary.classList.add('empty');
+            } else {
+                summary.classList.remove('empty');
+            }
+        }
+
+        // Открыть корзину
+        window.openCart = () => {
+            if (cart.length === 0) {
+                tg.showAlert('Кошик порожній. Додайте щось смачненьке! 🌯');
+                return;
+            }
+            
+            const modal = document.getElementById('cartModal');
+            const cartItems = document.getElementById('cartItems');
+            
+            cartItems.innerHTML = cart.map(item => `
+                <div class="cart-item">
+                    <div class="cart-item-info">
+                        <h4>${item.emoji} ${item.name}</h4>
+                        <div class="item-price">${item.price} грн</div>
+                    </div>
+                    <div class="cart-item-actions">
+                        <button onclick="updateQty(${item.id}, -1)">−</button>
+                        <span class="qty">${item.qty}</span>
+                        <button onclick="updateQty(${item.id}, 1)">+</button>
+                        <button onclick="removeItem(${item.id})" style="background: #ff4444; color: white;">✕</button>
+                    </div>
+                </div>
+            `).join('');
+            
+            document.getElementById('cartTotal').textContent = 
+                `${cart.reduce((sum, item) => sum + (item.price * item.qty), 0)} грн`;
+            
+            modal.classList.add('active');
+        };
+
+        window.closeCart = () => {
+            document.getElementById('cartModal').classList.remove('active');
+        };
+
+        // Обновление количества
+        window.updateQty = (itemId, delta) => {
+            const item = cart.find(i => i.id === itemId);
+            if (item) {
+                item.qty += delta;
+                if (item.qty <= 0) {
+                    cart = cart.filter(i => i.id !== itemId);
+                }
+                updateCartSummary();
+                openCart(); // Перерисовываем корзину
+            }
+        };
+
+        window.removeItem = (itemId) => {
+            cart = cart.filter(i => i.id !== itemId);
+            updateCartSummary();
+            openCart(); // Перерисовываем корзину
+        };
+
+        // Оформление заказа
+        window.placeOrder = () => {
+            if (cart.length === 0) return;
+            
+            // Отправляем заказ в бота
+            const orderData = {
+                items: cart.map(item => ({
+                    name: item.name,
+                    qty: item.qty,
+                    price: item.price
+                })),
+                total: cart.reduce((sum, item) => sum + (item.price * item.qty), 0)
+            };
+            
+            tg.sendData(JSON.stringify(orderData));
+            
+            // Показываем success modal
+            closeCart();
+            document.getElementById('successModal').classList.add('active');
+            cart = [];
+            updateCartSummary();
+            
+            // Вибрация
+            tg.HapticFeedback.notificationOccurred('success');
+        };
+
+        window.closeSuccessModal = () => {
+            document.getElementById('successModal').classList.remove('active');
+        };
+
+        // Закрытие по клику вне модалки
+        document.getElementById('cartModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('cartModal')) {
+                closeCart();
+            }
+        });
+
+        // Инициализация
+        renderMenu();
+    </script>
+</body>
+</html>
